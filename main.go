@@ -3,37 +3,66 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
-	"math"
+	"iamargus95/josephus/simulator"
+	"os"
 	"strconv"
+	"strings"
+	"time"
 )
 
-func main() {
+// Get N from the command line
+// Arguments: <None>
+// Return value: []int
+func getCSVInput() []int {
+	n := flag.String("N", "", "Total number of soldiers in the circle [where N > 0]")
+
 	flag.Parse()
-	input := flag.Arg(0)
-	noOfSoldiers, err := validateInput(input)
-	if err != nil {
-		fmt.Println("Enter valid Integer value.")
+	if *n == "" {
+		flag.PrintDefaults()
+		return nil
 	}
-	result := josephusSimulation(noOfSoldiers)
-	fmt.Printf("\nThe surviving soldier is standing at position no : %d\n\n", result)
+
+	inputsString := strings.Split(*n, ",")
+
+	var inputsInt []int
+	for _, v := range inputsString {
+		i, err := strconv.Atoi(v)
+		if err != nil {
+			flag.PrintDefaults()
+			return nil
+		}
+		inputsInt = append(inputsInt, i)
+	}
+
+	return inputsInt
 }
 
-func validateInput(input string) (int, error) {
+func main() {
 
-	val, err := strconv.Atoi(input)
-	if err != nil {
-		log.Fatal(err)
+	circlesOfDeath := getCSVInput()
+
+	for _, circle := range circlesOfDeath {
+		newCircle := new(simulator.CircleOfDeath)
+
+		newCircle.Init(circle, 1)
+
+		for _, v := range newCircle.Execute().KillingOrder {
+			fmt.Println("\t", v+1, "is dead")
+			time.Sleep(50 * time.Millisecond)
+		}
+
+		fmt.Fprintf(
+			os.Stderr,
+			"\n\tJosephus is standing at position no. %d in the circle of death among %d soldiers.\n\n",
+			newCircle.Execute().LastAlive+1,
+			circle,
+		)
+
+		fmt.Printf(
+			"\n\tJosephus is standing at position no. %d in the circle of death among %d soldiers.\n\n",
+			newCircle.Execute().LastAlive+1,
+			circle,
+		)
 	}
-	return val, err
-}
 
-func josephusSimulation(noOfSoldiers int) int {
-
-	val := math.Log2(float64(noOfSoldiers))
-	intoInt := int(val) / 1
-	rem := noOfSoldiers - int(math.Pow(2, float64(intoInt)))
-	result := (2 * rem) + 1
-
-	return result
 }
